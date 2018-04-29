@@ -8,4 +8,4 @@ Package LPO provides a Go language suite of tools for Linear Programming (LP) an
 
 •	Solving models via submission to the Cplex solver.
 
-LPO indirectly makes use of the callable C functions available in the Cplex solver by using the auxiliary GPX package. GPX functionality is covered in a separate document.
+LPO indirectly makes use of the callable C functions available in the Cplex solver by using the independent GPX package.
