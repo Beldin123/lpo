@@ -14,7 +14,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/pkg/errors"
-	"gpx"
+	"github.com/Beldin123/gpx"
 	"io/ioutil"
 	"os"
 	"os/exec"
