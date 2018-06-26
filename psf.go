@@ -124,7 +124,7 @@ const (
 )
 
 // Delimiter for sections in PSOP file
-const psFileDelim = "#------------------------------------------------------------------------------\n"
+const fileDelim = "#------------------------------------------------------------------------------\n"
 
 const (
 	psVarStatNA   = "NA"    // Var state provided by cplex not available
@@ -1577,7 +1577,7 @@ func WritePsopFile(fileName string, coefPerLine int) error {
 
 	startTime := time.Now()
 
-	fmt.Fprintf(f, "%s", psFileDelim)
+	fmt.Fprintf(f, "%s", fileDelim)
 	fmt.Fprintf(f, "# LPO record of pre-solve operations\n")	
 	fmt.Fprintf(f, "# Problem name: %s\n", Name)
 	fmt.Fprintf(f, "# Created on:   %s\n", startTime.Format("2006-01-02 15:04:05"))
@@ -1629,7 +1629,7 @@ func WritePsopFile(fileName string, coefPerLine int) error {
 		} // End switch on operation type
 
 		// Print the operation type, ID
-		fmt.Fprintf(f, "%s", psFileDelim)
+		fmt.Fprintf(f, "%s", fileDelim)
 		fmt.Fprintf(f, "# %s\n", opName)		
 		fmt.Fprintf(f, "PSOP: %s %5d\n", psOpList[i].OpType, i)
 
