@@ -16,3 +16,12 @@ LPO indirectly makes use of the callable C functions available in the Cplex solv
 
 The lporun subdirectory contains the executable intended as a tutorial demonstrating how lpo and gpx functions are used as well
 as exercisers which permit users to independently call and test each function exported by the two packages.
+
+### Installation and Use
+
+To install the package on a Windows platform, go to the cmd.exe window and enter the command:
+
+  go get -u github.com/Beldin123/lpo
+  
+When installed, build the package and run the executable lporun to see the examples of how this package can be used, or to
+exercise each of the exported functions.
