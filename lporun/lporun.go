@@ -20,7 +20,7 @@ import (
 var mainMenuOn bool = true    // Flag for main lpo function display
 var lpoMenuOn  bool = false   // Flag for enabling lpo functions   
 var gpxMenuOn  bool = false   // Flag for enabling gpx functions   
-var custEnvOn  bool = true    // Flag for enabling custom paths and names
+var custEnvOn  bool = false   // Flag for enabling custom paths and names
 var pauseAfter int  = 50      // Number of items to print before pausing
 
 // Customized environment used if custEnvOn = true.
