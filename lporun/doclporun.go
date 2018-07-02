@@ -31,6 +31,7 @@ The options available from the main menu are:
    10 - write gpx file to be read by gpxrun in the companion gpx package
    11 - show gpx input data structures
    12 - show gpx solution data structures
+   13 - show Cplex solution (contents of xml file loaded into data structures)
 	
 
 In addition to the commands, the main menu also includes the following toggles:	
@@ -78,7 +79,7 @@ section for details).
 
 The next prompt allows the user to specify which matrix-reduction operations to
 apply, and whether to solve the problem. The high-level options are "all" (apply all
-reductions and solve the problem), "none" (don't reduce anything and don't solve),
+reductions and solve the problem), "none" (don't reduce anything but solve problem),
 or blank (carriage-return) to set each flag independently. The user must explicitly
 enter "Y" at each of the prompts to set the corresponding to "true", since any other
 response to the prompt will leave the flag in its default "false" state.
@@ -127,10 +128,10 @@ The functions which are used in this example are:
    CplexSolveMps  - Read the MPS file specified, solve it, and create a solution file.
    CplexParseSoln - Parse the solution file provided by Cplex and populate the
                     lpo.CplexSoln data structure.
+   internal func. - Print the contents of the CplexSoln data structure
 
-The value of the objective function is displayed as part of this example. No
-other fields of the solution data structure are displayed, or used in any other
-aspect by lpo, but remain available for those users wishing to access them.
+The value of the objective function is displayed as part of this example. The user
+has the option to display the contents of all fields of the solution data structure.
 
 Using ReduceMatrix
 
@@ -189,6 +190,12 @@ Show gpx solution
 This option is used to display the solution provided by Cplex. It is useful when
 running individual gpx functions which do not automatically show the solution when
 it is obtained.
+
+Show Cplex solution
+
+This option displays the data structure containing the solution obtained by parsing
+the Cplex solution xml file. It is useful when wishing to look at the raw Cplex
+solution without having to open the file.
 
 TOGGLES
 

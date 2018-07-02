@@ -1,4 +1,9 @@
-// This file contains the main function and functions called from the main wrapper.
+// This file contains the main function and functions called from the main menu.
+
+// KLUDGE ALERT: Since the exerciser needs to pass information to functions in a
+// sequence that would not generally be used by a "real" program, several arguments
+// have been declared as global variables within the scope of this package, and may,
+// or may not, be passed via function arguments, depending on the function.
 
 package main
 
@@ -11,11 +16,12 @@ import (
 )
 
 // Flags to control display of menus and use of customized environment.
+
 var mainMenuOn bool = true    // Flag for main lpo function display
 var lpoMenuOn  bool = false   // Flag for enabling lpo functions   
 var gpxMenuOn  bool = false   // Flag for enabling gpx functions   
 var custEnvOn  bool = true    // Flag for enabling custom paths and names
-var pauseAfter int = 50       // Number of items to print before pausing
+var pauseAfter int  = 50      // Number of items to print before pausing
 
 // Customized environment used if custEnvOn = true.
 // It is intended to reduce the amount of typing for SOME (not all) user input,
@@ -28,7 +34,15 @@ var fPrefRdcMps   string = "r_"     // Prefix for MPS file storing reduced matri
 var fPrefPsopOut  string = "psop_"  // Prefix for file storing data removed during PSOP
 var fExtension    string = ".txt"   // Extension of source data files in development dir.  
 
+// Need to declare lpo variables here to avoid passing them as arguments to the
+// wrapper functions as individual wrapper commands are executed.
+
+var lpCpSoln lpo.CplexSoln    // Cplex solution obtained from parsing xml file
+var lpStats  lpo.Statistics   // statistics data structure
+var psResult lpo.PsSoln       // solution received from lpo
+
 // Delimiter for sections in GPX input file
+
 const fileDelim = "#------------------------------------------------------------------------------\n"
 
 //==============================================================================
@@ -48,6 +62,7 @@ func printOptions() {
 	fmt.Println(" 1 - using SolveProb   2 - using Cplex func  3 - using ReduceMtrx  4 - read MPS file")
 	fmt.Println(" 5 - write MPS file    6 - init. lpo struct  7 - show lpo input    8 - show  lpo soln.")
 	fmt.Println(" 9 - init. gpx struct 10 - write gpx file   11 - show gpx input   12 - show  gpx soln.")
+	fmt.Println("13 - show Cplex soln")
   }
 
   if lpoMenuOn {
@@ -75,6 +90,41 @@ func printOptions() {
 
 //==============================================================================
 
+// wpInitLpo initializes all input, solution, and other (e.g. statistics) data
+// structures. As much as possible, it uses the initialization routines from the
+// lpo package. The function accepts no arguments.
+// In case of failure, function returns an error.
+func wpInitLpo() {
+
+	lpo.InitModel()
+
+	// If the model is empty, and we get the statistics, we actually initialize
+	// the statistics data structure (since there is nothing to get).
+	
+	lpo.GetStatistics(&lpStats)
+
+	// Similarly, if we call CplexParseSoln with a bogus file name and ignore the
+	// error, we get back the initialized Cplex solution data structure (again
+	// because there is nothing to get.
+	
+	_ = lpo.CplexParseSoln("", &lpCpSoln)
+				
+	// The only thing left to initialize is the solution data structure.
+		
+    psResult.ColsDel = 0
+	psResult.RowsDel = 0
+	psResult.ElemDel = 0
+	psResult.ObjVal  = 0.0
+	psResult.ConMap  = nil
+	psResult.VarMap  = nil
+
+
+	fmt.Printf("All lpo data structures have been initialized.\n")
+		
+}
+
+//==============================================================================
+
 // wpSolveProb illustrates an example of a problem solved using the internal
 // data structures. It reads data from file, populates the internal data structures,
 // solves the problem, prints the solution, and gives user the option to save
@@ -85,12 +135,11 @@ func wpSolveProb() error {
 	var filePsopOut         string  // output file for pre-solve reductions
 	var fileCplexOut        string  // output file for Cplex xml solution
 	var flagChoice          string  // flag selection read from user
-	var userInput           string  // holder for general input from user
+	var userString          string  // holder for general input from user
 	var runTB, runRowS        bool  // flags for row reductions
 	var runColS, runFixedVars bool  // flags for column reductions
 	var runCplex              bool  // flag controlling if problem is solved
 	var psCtrl          lpo.PsCtrl  // control structure for reductions
-	var psResult        lpo.PsSoln  // solution received from lpo
 	var err                  error  // error received from called functions
 
 
@@ -135,7 +184,13 @@ func wpSolveProb() error {
 		fmt.Scanln(&filePsopOut)		
 	}
 
-	// Set the problem reduction flags.
+	// Initialize and set the problem reduction flags.
+	runTB        = false
+	runRowS      = false
+	runColS      = false
+	runFixedVars = false
+	runCplex     = true			
+
 	fmt.Printf("Do you want the problem reduced and solved ['all' | 'none' | <CR> to set]: ")
 	fmt.Scanln(&flagChoice)
 		
@@ -144,47 +199,44 @@ func wpSolveProb() error {
 		runRowS      = true
 		runColS      = true
 		runFixedVars = true
-		runCplex     = true	
 	} else if flagChoice == "none" {
-		runTB        = false
-		runRowS      = false
-		runColS      = false
-		runFixedVars = false
-		runCplex     = false			
+		// Default state, no changes.
 	} else {
-		userInput = ""
+		userString = ""
 		fmt.Printf("Do you wish to run TightenBounts [Y|N]: ")
-		fmt.Scanln(&userInput)
-		if userInput == "y" || userInput == "Y" {
+		fmt.Scanln(&userString)
+		if userString == "y" || userString == "Y" {
 			runTB = true
 		}
 		
-		userInput = ""
+		userString = ""
 		fmt.Printf("Do you wish to remove row singletons [Y|N]: ")
-		fmt.Scanln(&userInput)
-		if userInput == "y" || userInput == "Y" {
+		fmt.Scanln(&userString)
+		if userString == "y" || userString == "Y" {
 			runRowS = true
 		}
 
-		userInput = ""
+		userString = ""
 		fmt.Printf("Do you wish to remove column singletons [Y|N]: ")
-		fmt.Scanln(&userInput)
-		if userInput == "y" || userInput == "Y" {
+		fmt.Scanln(&userString)
+		if userString == "y" || userString == "Y" {
 			runColS = true
 		}
 
-		userInput = ""
+		userString = ""
 		fmt.Printf("Do you wish to remove fixed variables [Y|N]: ")
-		fmt.Scanln(&userInput)
-		if userInput == "y" || userInput == "Y" {
+		fmt.Scanln(&userString)
+		if userString == "y" || userString == "Y" {
 			runFixedVars = true
 		}
 
-		userInput = ""
+		userString = ""
 		fmt.Printf("Do you wish solve the problem via Cplex [Y|N]: ")
-		fmt.Scanln(&userInput)
-		if userInput == "y" || userInput == "Y" {
-			runCplex = true
+		fmt.Scanln(&userString)
+		if userString == "y" || userString == "Y" {
+			// Default state
+		} else {
+			runCplex = false
 		}
 		
 	} // end else setting individual flags
@@ -235,9 +287,9 @@ func wpSolveProb() error {
 		fmt.Printf("Finished at: %s\n\n", endTime.Format("2006-01-02 15:04:05"))
 
 		fmt.Printf("Do you want to see the detailed solution [Y|N]: ")
-		fmt.Scanln(&userInput)
-		if userInput == "y" || userInput == "Y" {
-			wpPrintLpoSoln(psResult)			
+		fmt.Scanln(&userString)
+		if userString == "y" || userString == "Y" {
+			wpPrintLpoSoln()			
 		}
 
 	} // End else there was no error
@@ -257,11 +309,10 @@ func wpSolveProb() error {
 // functions provided in this module.
 // The function accepts no arguments and returns no values.
 func wpSolveCplex() error {
-
+	var userString     string  // user input string
 	var fileName       string  // MPS input file
 	var filePresolve   string  // presolve file used by Cplex
 	var fileCplexOut   string  // output file generated by Cplex
-	var cpSoln  lpo.CplexSoln  // data structure holding the Cplex solution
 	var err             error  // error received from called functions
 
 	// Get the name of the source MPS file and generate other file names from the
@@ -291,23 +342,109 @@ func wpSolveCplex() error {
 
 	fmt.Println("")	
 	
-	err = lpo.CplexSolveMps(fileName, fileCplexOut, filePresolve, &cpSoln)
+	err = lpo.CplexSolveMps(fileName, fileCplexOut, filePresolve, &lpCpSoln)
 	if err != nil {
 		return errors.Wrap(err, "wpSolveCplex failed solving problem")			
 	}
 						
-	if err = lpo.CplexParseSoln(fileCplexOut, &cpSoln); err != nil {
+	if err = lpo.CplexParseSoln(fileCplexOut, &lpCpSoln); err != nil {
 		return errors.Wrap(err, "wpSolveCplex failed parsing solution")			
 	}
 	
 	fmt.Printf("\nMPS file read:      %s\n", fileName)
 	fmt.Printf("Cplex output:       %s\n", fileCplexOut)
 	fmt.Printf("Presolve file:      %s\n", filePresolve)
-	fmt.Printf("Objective value:    %f\n", cpSoln.Header.ObjValue)						
+	fmt.Printf("Objective value:    %f\n\n", lpCpSoln.Header.ObjValue)						
+
+	userString = ""
+	fmt.Printf("Display Cplex solution [Y|N]: ")
+	fmt.Scanln(&userString)
+	if userString == "y" || userString == "Y" {
+		wpPrintCplexSoln()
+	}
 
 	return nil
 }
 
+//==============================================================================
+
+// wpPrintCplexSoln prints the solution generated by cplex and written to xml file.
+// Function uses the parsed Cplex output contained in the global variable. 
+// It returns nothing.
+func wpPrintCplexSoln() {
+	var userString string
+	var counter    int
+		
+	fmt.Println("\nSolution from cplex:\n")
+
+	fmt.Println("Version:        ", lpCpSoln.Version)
+	fmt.Println("ProblemName:    ", lpCpSoln.Header.ProblemName)
+	fmt.Println("ObjValue:       ", lpCpSoln.Header.ObjValue)
+	fmt.Println("SolTypeValue:   ", lpCpSoln.Header.SolTypeValue)
+	fmt.Println("SolTypeString:  ", lpCpSoln.Header.SolTypeString)
+	fmt.Println("SolStatusValue: ", lpCpSoln.Header.SolStatusValue)
+	fmt.Println("SolStatusString:", lpCpSoln.Header.SolStatusString)
+	fmt.Println("SolMethodString:", lpCpSoln.Header.SolMethodString)
+	fmt.Println("PrimalFeasible: ", lpCpSoln.Header.PrimalFeasible)
+	fmt.Println("DualFeasuble:   ", lpCpSoln.Header.DualFeasible)
+	fmt.Println("SimplexItns:    ", lpCpSoln.Header.SimplexItns)
+	fmt.Println("BarrierItns:    ", lpCpSoln.Header.BarrierItns)
+	fmt.Println("WriteLevel:     ", lpCpSoln.Header.WriteLevel)
+	fmt.Println("EpRHS:          ", lpCpSoln.Quality.EpRHS)
+	fmt.Println("EpOpt:          ", lpCpSoln.Quality.EpOpt)
+	fmt.Println("MaxPrimalInfeas:", lpCpSoln.Quality.MaxPrimalInfeas)
+	fmt.Println("MaxDualInfeas:  ", lpCpSoln.Quality.MaxDualInfeas)
+	fmt.Println("MaxPrimalResid: ", lpCpSoln.Quality.MaxPrimalResidual)
+	fmt.Println("MaxDualResidual:", lpCpSoln.Quality.MaxDualResidual)
+	fmt.Println("Quality.MaxX:   ", lpCpSoln.Quality.MaxX)
+	fmt.Println("Quality.MaxPi:  ", lpCpSoln.Quality.MaxPi)
+	fmt.Println("Qual.MaxSlack:  ", lpCpSoln.Quality.MaxSlack)
+	fmt.Println("Qual.MaxRedCost:", lpCpSoln.Quality.MaxRedCost)
+	fmt.Println("Quality.Kappa:  ", lpCpSoln.Quality.Kappa)
+	
+	userString = ""
+	counter    = 0
+	fmt.Printf("\nDisplay variables list [Y|N]: ")
+	fmt.Scanln(&userString)
+	if userString == "y" || userString == "Y" {
+		for i := 0; i < len (lpCpSoln.Varbs); i++ {
+			fmt.Printf("%4d: ", i)
+			fmt.Println(lpCpSoln.Varbs[i])
+			counter++
+			if counter == pauseAfter {
+				counter = 0
+				userString = ""
+				fmt.Printf("\nPAUSED... <CR> continue, any key to quit: ")
+				fmt.Scanln(&userString)
+				if userString != "" {
+					break 
+				}
+			} // end if pause required
+		}
+	}
+
+	userString = ""
+	counter    = 0
+	fmt.Printf("\nDisplay constraints list [Y|N]: ")
+	fmt.Scanln(&userString)
+	if userString == "y" || userString == "Y" {
+		for i := 0; i < len (lpCpSoln.LinCons); i++ {
+			fmt.Printf("%4d: ", i)
+			fmt.Println(lpCpSoln.LinCons[i])
+			counter++
+			if counter == pauseAfter {
+				counter = 0
+				userString = ""
+				fmt.Printf("\nPAUSED... <CR> continue, any key to quit: ")
+				fmt.Scanln(&userString)
+				if userString != "" {
+					break 
+				}
+			} // end if pause required
+		} // end for constraints list
+	} // end if printing constraints
+
+}
 //==============================================================================
 
 // wpReduceMtrx is a wrapper for lpo.ReduceMatrix. During execution, it prompts
@@ -319,7 +456,7 @@ func wpReduceMtrx() error {
 
 	var psCtrl lpo.PsCtrl   // pre-solve control structure
 	var flagChoice string   // choice of which options to select
-	var userInput  string   // input provided by user
+	var userString string   // input provided by user
 	var runTB        bool   // run TightenBounds
 	var runRowS      bool   // remove row singletons
 	var runColS      bool   // remove column singletons
@@ -343,35 +480,34 @@ func wpReduceMtrx() error {
 		runRowS      = true
 		runColS      = true
 		runFixedVars = true
-	} else if flagChoice != "none" {
-		fmt.Printf("Flags for TB, rowSgltn, colSgltn, fixedVars: ")
-		fmt.Scanln(&runTB, &runRowS, &runColS, &runFixedVars)		
+	} else if flagChoice == "none" {
+		// Default state
 	} else {
-		userInput = ""
+		userString = ""
 		fmt.Printf("Do you wish to run TightenBounts [Y|N]: ")
-		fmt.Scanln(&userInput)
-		if userInput == "y" || userInput == "Y" {
+		fmt.Scanln(&userString)
+		if userString == "y" || userString == "Y" {
 			runTB = true
 		}
 		
-		userInput = ""
+		userString = ""
 		fmt.Printf("Do you wish to remove row singletons [Y|N]: ")
-		fmt.Scanln(&userInput)
-		if userInput == "y" || userInput == "Y" {
+		fmt.Scanln(&userString)
+		if userString == "y" || userString == "Y" {
 			runRowS = true
 		}
 
-		userInput = ""
+		userString = ""
 		fmt.Printf("Do you wish to remove column singletons [Y|N]: ")
-		fmt.Scanln(&userInput)
-		if userInput == "y" || userInput == "Y" {
+		fmt.Scanln(&userString)
+		if userString == "y" || userString == "Y" {
 			runColS = true
 		}
 
-		userInput = ""
+		userString = ""
 		fmt.Printf("Do you wish to remove fixed variables [Y|N]: ")
-		fmt.Scanln(&userInput)
-		if userInput == "y" || userInput == "Y" {
+		fmt.Scanln(&userString)
+		if userString == "y" || userString == "Y" {
 			runFixedVars = true
 		}
 				
@@ -396,6 +532,9 @@ func wpReduceMtrx() error {
 
 //==============================================================================
 
+// wpPrintLpoIn prints the input data structures in their raw format, directly
+// as entries in the appropriate list. The function accepts no arguments and returns
+// no values.
 func wpPrintLpoIn() {
 	var userString string  // user input
 	var counter    int     // counter keeping track of number of lines printed
@@ -406,8 +545,9 @@ func wpPrintLpoIn() {
 		fmt.Printf("WARNING: Problem name is empty.\n")
 	}
 
-
+	// If the Rows list is not empty, and the user wants to see it, print it.
 	if len(lpo.Rows) != 0 {
+		userString = ""
 		fmt.Printf("\nDisplay rows list [Y|N]: ")
 		fmt.Scanln(&userString)
 		if userString == "y" || userString == "Y" {
@@ -419,6 +559,7 @@ func wpPrintLpoIn() {
 				counter++
 				if counter == pauseAfter {
 					counter = 0
+					userString = ""
 					fmt.Printf("\nPAUSED... <CR> continue, any key to quit: ")
 					fmt.Scanln(&userString)
 					if userString != "" {
@@ -431,7 +572,9 @@ func wpPrintLpoIn() {
 		fmt.Printf("WARNING: Rows list is empty.\n")
 	}	
 
+	// If the Cols list is not empty, and the user wants to see it, print it.
 	if len(lpo.Cols) != 0 {
+		userString = ""
 		fmt.Printf("\nDisplay columns list [Y|N]: ")
 		fmt.Scanln(&userString)
 		if userString == "y" || userString == "Y" {
@@ -442,6 +585,7 @@ func wpPrintLpoIn() {
 				counter++
 				if counter == pauseAfter {
 					counter = 0
+					userString = ""
 					fmt.Printf("\nPAUSED... <CR> continue, any key to quit: ")
 					fmt.Scanln(&userString)
 					if userString != "" {
@@ -454,7 +598,9 @@ func wpPrintLpoIn() {
 		fmt.Printf("WARNING: Columns list is empty.\n")
 	}	
 
+	// If the Elems list is not empty and the user wants to see it, print it.
 	if len(lpo.Elems) != 0 {
+		userString = ""
 		fmt.Printf("\nDisplay elements list [Y|N]: ")
 		fmt.Scanln(&userString)
 		if userString == "y" || userString == "Y" {
@@ -463,8 +609,9 @@ func wpPrintLpoIn() {
 			for i := 0; i < len(lpo.Elems); i++ {
 				fmt.Println(i, lpo.Elems[i])
 				counter++
-				if counter == 50 {
+				if counter == pauseAfter {
 					counter = 0
+					userString = ""
 					fmt.Printf("\nPAUSED... <CR> continue, any key to quit: ")
 					fmt.Scanln(&userString)
 					if userString != "" {
@@ -481,66 +628,94 @@ func wpPrintLpoIn() {
 
 //==============================================================================
 
-func wpPrintLpoSoln(psResult lpo.PsSoln) {
-	var userInput string
+// wpPrintLpoSoln prints the solution contained in the lpo data structures. It
+// presents the data in a formatted manner, and gives the user the option to pause
+// periodically so output does not scroll off the screen. The function accepts no
+// input and returns no values.
+func wpPrintLpoSoln() {
+	var userString string
 	var counter int
 
-				
-			
+	// Check if the lists exist, and if they do, print them.
+					
+	if len(psResult.VarMap)	<= 0 {
+		fmt.Printf("WARNING: Solution list of variables is empty.\n")
+	} else {
+		userString = ""
+		fmt.Printf("\nDisplay variable list [Y|N]: ")
+		fmt.Scanln(&userString)
+		if userString == "y" || userString == "Y" {
 			fmt.Printf("Variables are:\n")
 			fmt.Printf("  %-10s %-4s     %15s %15s %15s\n", "NAME", "ST", "VALUE", 
 				"REDUCED COST", "SCALE FACTOR")
 			
 			counter = 0
-			userInput = ""
 			for psVarbName, psVarb := range psResult.VarMap {
 				fmt.Printf("  %-10s %-4s     %15e %15e %15e\n", psVarbName, psVarb.Status,
 					psVarb.Value, psVarb.ReducedCost, psVarb.ScaleFactor)
 					
 				counter++
-				if counter == 50 {
+				if counter == pauseAfter {
 					counter = 0
+					userString = ""
 					fmt.Printf("\nPAUSED... <CR> continue, any key to quit: ")
-					fmt.Scanln(&userInput)
-					if userInput != "" {
+					fmt.Scanln(&userString)
+					if userString != "" {
 						break 
 					}
-				} // End if pause required
-			} // End for varb range
-							
-			fmt.Printf("\nConstraints are:\n")
+				} // end if pause required
+			} // end for varb range		
+		} // end if printing varb list
+	} // end else varb list not empty	
 
+	if len(psResult.ConMap) <= 0 {
+		fmt.Printf("WARNING: Solution list of constraints is empty.\n")		
+	} else {
+		userString = ""
+		fmt.Printf("\nDisplay constraint list [Y|N]: ")
+		fmt.Scanln(&userString)
+		if userString == "y" || userString == "Y" {
+			fmt.Printf("\nConstraints are:\n")
 			fmt.Printf("  %-10s %-4s %3s %15s %15s %15s %15s\n", "ROW",
-				"ST", "EQ", "RHS", "SLACK", "PI", "SCALE FACTOR")
+					"ST", "EQ", "RHS", "SLACK", "PI", "SCALE FACTOR")
 				
 			counter = 0
-			userInput = ""
 			for psConName,psCon := range psResult.ConMap {
 				fmt.Printf("  %-10s %-4s %3s %15e %15e %15e %15e\n",
 					psConName, psCon.Status, psCon.Type,
 					psCon.Rhs, psCon.Slack, psCon.Pi, psCon.ScaleFactor)
 				counter++
-				if counter == 50 {
+				if counter == pauseAfter {
 					counter = 0
+					userString = ""
 					fmt.Printf("\nPAUSED... <CR> continue, any key to quit: ")
-					fmt.Scanln(&userInput)
-					if userInput != "" {
+					fmt.Scanln(&userString)
+					if userString != "" {
 						break 
 					}
-				} // End if pause required
-			} // End for range of cons
+				} // end if pause required
+			} // end for range of cons			
+		} // end if printing constraint list
+	} // end else constraint list not empty						
 	
 }
 
 //==============================================================================
 
-// wpWriteGpx writes the contents of the internal data structures to a text
-// file.
+// wpWriteGpx takes the model contained in the lpo structures, translates them to
+// the gpx data structures, and prints the contents of the gpx data structures in
+// a text file, which can be read at a later time by the gpxrun executable. The
+// intent of this round-about mechanism is to transfer lpo data to gpx, which cannot
+// import any lpo data structures or functions. This function is intended purely for
+// the tutorial and is not needed by the main gpx package. The function accepts 
+// no arguments. In case of failure, the function returns an error.
 func wpWriteGpx() error {
+	var fileName string   // name of file to which gpx data are written
+	var err      error    // error returned from functions called
 
-	var fileName string    // name of file to which gpx data are written
-	var err      error
 
+	// Prompt the user for the name of the file, and adjust if custom environment
+	// is enabled.
 
 	fmt.Printf("Enter name of GPX file to be written: ")
 	fmt.Scanln(&fileName)
@@ -569,7 +744,7 @@ func wpWriteGpx() error {
 		return errors.Wrap(err, "Failed to translate from LPO to GPX")		
 	} 
 
-	// Print file header
+	// Print the file header
 	startTime := time.Now()
 
 	fmt.Fprintf(f, "%s", fileDelim)
@@ -625,13 +800,12 @@ func runMainWrapper() {
 
 	var fileName      string  // file name
 	var cmdOption     string  // command option
-	var psResult  lpo.PsSoln  // solution received from lpo
 	var err            error  // error returned by called functions
 
 
 	// Print header and options, and enter infinite loop until user quits.
 
-	fmt.Println("\nTUTORIAL AND WRAPPER FOR LPO AND GPX FUNCTIONS.")
+	fmt.Println("\nTUTORIAL AND EXERCISER FOR LPO AND GPX FUNCTIONS.")
 	printOptions()
 	
 	for {
@@ -648,7 +822,7 @@ func runMainWrapper() {
 
 		case "m":
 			if mainMenuOn {
-				lpoMenuOn = false
+				mainMenuOn = false
 				fmt.Println("\nMain menu will be hidden.")
 			} else {
 				mainMenuOn = true
@@ -754,7 +928,7 @@ func runMainWrapper() {
 			}
 
 		case "6":
-			fmt.Printf("Initialize lpo structures goes here.\n")
+			wpInitLpo()	
 			
 		case "7":
 			// Print LPO input data structures
@@ -762,7 +936,7 @@ func runMainWrapper() {
 			
 		case "8":
 			// Print LPO solution data structures
-			wpPrintLpoSoln(psResult)	
+			wpPrintLpoSoln()	
 
 		case "9":
 			// Initialize GPX data structures
@@ -786,6 +960,10 @@ func runMainWrapper() {
 			// Print GPX solution data structures
 			wpPrintGpxSoln()
 			fmt.Printf("\nDisplay of solution completed.\n")
+
+		case "13":
+			// Print Cplex solution
+			wpPrintCplexSoln()
 									
 		default:
 

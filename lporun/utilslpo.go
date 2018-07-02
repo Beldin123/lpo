@@ -4,21 +4,121 @@ package main
 
 import (
 	"fmt"
-	"lpo"
-//	"github.com/Beldin123/gpx"
-//	"github.com/Beldin123/lpo"
+	"github.com/Beldin123/lpo"
 	"github.com/pkg/errors"
-//	"io/ioutil"
-//	"os"
-//	"time"
+	"strconv"
 )
 
-// Need to declare lpo variables here to avoid passing them as arguments to the
-// wrapper functions as individual wrapper commands are executed.
 
-var lpCpSoln lpo.CplexSoln
-var lpStats  lpo.Statistics
+//==============================================================================
 
+// wpGetPoint obtains a point (set of variable values for a specific constraint)
+// that are used in other functions such as CalcLhs and CalcConViolation) and
+// passes the row index and the list of values back to the caller via the argument
+// list. In case of failure, function returns an error.
+func wpGetPoint(rowIndex *int, point *[]float64) error {
+	var userString string   // user input string
+	var bigInt     int64    // big int translated from the user input
+	var pointItem  float64  // item of the point list as the point is created
+	var iElem      int      // index of element being processed
+	var iCol       int      // index of column being processed
+	var err        error    // error returned from functions called
+
+	// Initialize the variables to be passed back, and prompt user for the value
+	// of each variable.	
+	*rowIndex = -1
+	*point    = nil
+	
+	fmt.Printf("Enter constraint index: ")
+	fmt.Scanln(&userString)
+	if bigInt, err = strconv.ParseInt(userString,10,64); err != nil {
+    	return errors.Errorf("'%s' is not an integer.", userString)
+	}
+
+	// Check that the input is valid, or fail with error if not. If valid, add
+	// the variable value to the list.	
+	*rowIndex = int(bigInt)
+
+	if *rowIndex < 0 || *rowIndex >= len(lpo.Rows) {
+		return errors.Errorf("Row index %d out of range.", *rowIndex)
+	}
+
+	fmt.Printf("Variable values are needed for the following constraint:\n")
+	lpo.PrintRow(*rowIndex)	
+	
+	for i := 0; i < len(lpo.Rows[*rowIndex].HasElems); i++ {
+		iElem      = lpo.Rows[*rowIndex].HasElems[i]
+		iCol       = lpo.Elems[iElem].InCol
+		userString = ""
+		fmt.Printf("Enter value for %s: ", lpo.Cols[iCol].Name)
+		fmt.Scanln(&userString)
+		if pointItem, err = strconv.ParseFloat(userString, 64); err != nil {
+    		return errors.Errorf("'%s' is not a real number.", userString)			
+		}
+		*point = append(*point, pointItem)	
+	}
+	
+	return nil	
+}
+
+//==============================================================================
+
+// wpCalcLhs is a wrapper for lpo.CalcLhs. It uses a separate function to get the
+// constraint index and set of variable values from the user, and passes these to
+// lpo function. It then displays the results obtained and any errors that may have
+// occurred. Function accepts no input. In case of failure, it returns an error.
+func wpCalcLhs() error {
+	var index      int      // index of row we want to check
+	var status     int      // status of operation returned back to us
+	var lhs        float64  // lhs value of the constraint
+	var conPoint []float64  // set of variable values for the constraint
+	var err        error    // error returned by functions called
+
+	// Get the row index and point from the user, and pass these to the lpo
+	// function provided there were no errors.
+	if err = wpGetPoint(&index, &conPoint); err != nil {
+		return errors.Wrap(err, "wpCalcLhs failed to get point")
+	} 
+
+	if err = lpo.CalcLhs(index, conPoint, &lhs, &status); err != nil {
+		return errors.Wrap(err, "wpCalcLhs failed to get lhs")
+	}
+
+	fmt.Printf("\nLHS = %f, Status = %d.\n", lhs, status)
+	
+	return nil	
+}
+
+//==============================================================================
+
+// wpCalcConViol is a wrapper for lpo.CalcConViolation. It uses a separate function 
+// to get the constraint index and set of variable values from the user, and passes 
+// these to the lpo function. It then displays the results obtained and any errors 
+// that may have occurred. Function accepts no input. 
+// In case of failure, it returns an error.
+func wpCalcConViol() error {
+	var index      int      // index of row we want to check
+	var status     int      // status of operation that was performed
+	var conViol    float64  // constraint violation magnitude and sign
+	var conPoint []float64  // set of variable values for the constraint
+	var err        error    // error returned by functions called
+
+	// Get the row index and point from the user, and pass these to the lpo
+	// function provided there were no errors.
+
+	if err = wpGetPoint(&index, &conPoint); err != nil {
+		return errors.Wrap(err, "wpCalcConViol failed to get point")
+	} 
+	
+	err = lpo.CalcConViolation(index, conPoint, &conViol, &status)
+	fmt.Printf("Violation = %f, Status = %d\n", conViol, status)
+	
+	if err != nil {
+		errors.Wrap(err, "wpCalcConViol failed to get violation")
+	}
+	
+	return nil		
+}
 
 //==============================================================================
 
@@ -33,7 +133,6 @@ func runLpoWrapper(cmdOption string) error {
 	var userInt       int           // holder for int input by user
 	var tmpString     string        // temp holder for string variables
 	var tmpInt        int           // temp holder for int variables
-//	var tmpBool       bool          // temp holder for boolean variable
 	var err           error         // error returned by functions called
 
 	// The gpx variables used in this function are package global variables so
@@ -51,15 +150,23 @@ func runLpoWrapper(cmdOption string) error {
 			fmt.Printf("Post-processing on model completed successfully.\n")				
 		}			
 
-
 	//--------------------------------------------------------------------------
 	case "22":
-		fmt.Printf("CalcConViolation wrapper not implemented yet.\n")
+		// CalcConViolation
+		if err = wpCalcConViol(); err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Printf("CalcConViolation completed successfully.\n")
+		}
 
 	//--------------------------------------------------------------------------
 	case "23":
 		// CalcLhs
-		fmt.Printf("CalcLhs wrapper not implemented yet.\n")
+		if err = wpCalcLhs(); err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Printf("CalcLhs completed successfully.\n")
+		}		
 
 	//--------------------------------------------------------------------------
 	case "24":
@@ -168,8 +275,13 @@ func runLpoWrapper(cmdOption string) error {
 
 	//--------------------------------------------------------------------------
 	case "37":
-		if err = lpo.PrintStatistics(lpStats); err != nil {
-			fmt.Println(err)
+		// GetStatistics
+		if lpStats.NumElements == 0 {
+			fmt.Printf("There are no elements in data structure.\n")
+		} else {
+			if err = lpo.PrintStatistics(lpStats); err != nil {
+				fmt.Println(err)
+			}			
 		}
 
 	//--------------------------------------------------------------------------
@@ -259,13 +371,11 @@ func runLpoWrapper(cmdOption string) error {
 			fmt.Printf("PSOP written to file '%s'\n.", tmpString)
 		}
 
-
 	//--------------------------------------------------------------------------
 	default:
 		return errors.Errorf("Command %s not in functions menu", cmdOption)
 		
 	} // End switch on command option
-
 	
 	return nil	
 }
