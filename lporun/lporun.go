@@ -472,7 +472,7 @@ func wpReduceMtrx() error {
 	runFixedVars = false
 
 	// Get the options from the user, and change flags as needed.
-	fmt.Printf("SolveProb flags ('all' | 'none' | <CR> to set): ")
+	fmt.Printf("Set reductions to apply ('all' | 'none' | <CR> to set): ")
 	fmt.Scanln(&flagChoice)
 	
 	if flagChoice == "all" {
