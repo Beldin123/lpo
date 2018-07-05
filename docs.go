@@ -90,5 +90,9 @@ Users who do not wish to reduce and solve the problem as described above have th
 option of calling individual functions to only perform a specific task. Those
 functions are listed and described in the following sections.
 
+The executable provided with the package illustrates how the lpo package can be
+used and contains exercisers to allow each lpo and gpx function to be tested independently.
+
+
 */
 package lpo
