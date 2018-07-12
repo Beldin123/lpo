@@ -9,7 +9,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/Beldin123/lpo"
+	"github.com/go-opt/lpo"
 	"github.com/pkg/errors"
 	"os"
 	"time"
