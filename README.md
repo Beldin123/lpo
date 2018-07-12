@@ -21,7 +21,7 @@ as exercisers which permit users to independently call and test each function ex
 
 To install the package on a Windows platform, go to the cmd.exe window and enter the command:
 
-  go get -u github.com/Beldin123/lpo
+  go get -u github.com/go-opt/lpo
   
 When installed, build the package and run the executable lporun to see the examples of how this package can be used, or to
 exercise each of the exported functions.
