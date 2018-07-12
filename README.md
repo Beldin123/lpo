@@ -18,6 +18,7 @@ The lpo package is dependent on the gpx package and the errors package, both of 
 downloaded separately. The import statments are:
 
 •	github.com/pk/errors
+
 •	github.com/go-opt/gpx
 
 The gpx package is itself dependent on the installation and configuration of Cplex. Please refer to that package for details.
