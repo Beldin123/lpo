@@ -4,7 +4,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/Beldin123/gpx"
+	"github.com/go-opt/gpx"
 	"github.com/pkg/errors"
 	"strings"
 )
