@@ -12,6 +12,18 @@ Package LPO provides a Go language suite of tools for Linear Programming (LP) an
 
 LPO indirectly makes use of the callable C functions available in the Cplex solver by using the independent GPX package.
 
+### Dependencies
+
+The lpo package is dependent on the gpx package and the errors package, both of which are available in github and must be
+downloaded separately. The import statments are:
+
+  import (
+    "github.com/pk/errors"
+    "github.com/go-opt/gpx"
+  )
+
+The gpx package is itself dependent on the installation and configuration of Cplex. Please refer to that package for details.
+
 ### Executable
 
 The lporun subdirectory contains the executable intended as a tutorial demonstrating how lpo and gpx functions are used as well
