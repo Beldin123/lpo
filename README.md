@@ -17,7 +17,7 @@ LPO indirectly makes use of the callable C functions available in the Cplex solv
 The lpo package is dependent on the gpx package and the errors package, both of which are available in github and must be
 downloaded separately. The import statments are:
 
-•	github.com/pk/errors
+•	github.com/pkg/errors
 
 •	github.com/go-opt/gpx
 
