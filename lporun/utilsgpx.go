@@ -11,8 +11,8 @@ package main
 import (
 	"fmt"
 	"github.com/go-opt/gpx"
+	"github.com/go-opt/lpo"
 	"github.com/pkg/errors"
-	"lpo"
 	"time"
 )
 
