@@ -1,4 +1,14 @@
+// 01   July  5, 2018   Initial version uploaded to github
+// 02   Aug. 28, 2018   Modified lporun, added support for Coin-OR
+
+
 package lpo
+
+// lpo: Linear Programming Object
+//
+// This file contains the main LPO functions used to read and write MPS files,
+// build and manage the model, and print the model as well as individaul components
+// of the model.
 
 import (
 	"bufio"
@@ -153,15 +163,10 @@ var (
 //==============================================================================
 
 // Package global variables
-var checkCol      []bool   // Flag indicating that column was checked
-var checkRow      []bool   // Flag indicating that row was checked
-var objRowConst   float64  // RHS associated with objective function if not 0
-var pausePrint int = 50    // Limit at which printout should pause
-var logLevel   int = pINFO // Level of printed detail
+var objRowConst    float64          // RHS for objective function if not 0
+var pausePrint     int = 50         // Limit at which printout should pause
+var logLevel       int = pINFO      // Level of printed detail
 var tempDirPath string = "c:/temp"  // Path for temp directory 
-
-// Default temp dir location used for internal files. It can be retrieved and
-// set by the Get and Set functions, respectively.
 
 // Package global constants for row and column states
 const (
@@ -198,8 +203,7 @@ const (
 // an externally-configurable package global variable.
 // Format string must be provided but can be empty ("").
 func log (msgLevel int, format string, a ...interface{}) {
-	
-	var msg string
+	var msg string   // message to be printed for the given log level
 		
 	if msgLevel <= logLevel {
 		if format != "" {
@@ -344,6 +348,10 @@ func AdjustModel() error {
 	var ihold int  // holder for integer numbers during processing
 	var index int  // holder for array indices during processing
 	var err error  // error value returned by secondary functions called by this one
+
+	if len(Rows) == 0 {
+		return errors.New("List of Rows is empty")		
+	}
 	
 	// Take the first nonbinding row as the objective function.
 	// Also lock this row (State = -1) to prevent deletion in future processing.
@@ -608,6 +616,8 @@ func CalcConViolation(rowIndex int, point []float64, viol *float64, status *int)
 
 //==============================================================================
 
+// TODO: This function is not working and needs to be looked at and fixed.
+//
 // scaleCols performs equilibriation scaling on the columns by dividing through 
 // by the largest element. Only a single pass is done. Changes are made to the 
 // global Cols data structure. 
@@ -1448,7 +1458,7 @@ func ReadMpsFile(fileName string) error {
 	var numTokens          int  // number of tokens in line being processed
 	var ihold              int  // local holder for integer values
 	var numCols            int  // number of columns in model
-	var mpsLineNum     int = 0  // line number of MPS file being read
+	var mpsLineNum         int  // line number of MPS file being read
 	var readState      int = 0  // data type in MPS file being processed
 	var numRhs         int = 0  // counter of how many RHS values were found
 	var numRanges      int = 0  // counter of how many RANGES entries in file
@@ -1491,36 +1501,39 @@ func ReadMpsFile(fileName string) error {
 	// Create the token which will be used when reading the file.
 	token := make([]string, 1)
 
-	// The main file reading loop ----------------------------------------------
+	// The main file reading loop terminated when reaching eof -----------------
 
-	eof := false
+	mpsLineNum  = 0
 	lastColName = ""
-	for !eof {
+
+	for {
+
+		// Read each line of the file until eof is reached. If a read error is 
+		// detected, return that error and line number where found.
 		mpsLineNum++
-
-		curLine, err := mpsReader.ReadString('\n') //reads in a line
-
-		// EOF is not an error which would cause the function to abort, so ignore.
+		curLine, err := mpsReader.ReadString('\n')
 
 		if err == io.EOF {
-			err = nil
-			eof = true
+			break
 		}
 		if err != nil {
 			log(pERR, "ERROR: Problem reading line %d.\n", mpsLineNum)
 			return errors.Errorf("Problem reading line %d", mpsLineNum)
 		}
 
+		// Skip comment lines.
 		if string(curLine[0]) == "*" {
 			continue
-		} // Skip lines with an asterisk in the first column
+		}
 		
 		// Split the line above into a slice of tokens using strings.Fields.
 		token = strings.Fields(curLine) 
 		numTokens = len(token)
+		
+		// Skip blank lines.
 		if numTokens == 0 {
 			continue
-		} //skip blank lines
+		}
 
 		// Take the appropriate action for a new keyword ---------------------------
 
@@ -1877,8 +1890,8 @@ func ReadMpsFile(fileName string) error {
 								
 				
 			} // end of switch on case 5
-		} // end of switch on readState ------------------------------------------
-	} // end of main line reading for --------------------------------------------
+		} // end of switch on readState
+	} // end for loop reading file
 
 
 	// Adjust the model after information was read into the data structures.
@@ -1956,6 +1969,12 @@ func WriteMpsFile(fileName string) error {
 
 	for i := 0; i < len(Cols); i++ {
 
+		// Flag empty columns as an error because they do not get written to file
+		// and should not be present in the model.
+		if len(Cols[i].HasElems) == 0 {
+			return errors.Errorf("WriteMpsFile detected empty column %s", Cols[i].Name)
+		}
+		
 		itemsToPrint = 0
 		firstRowName = ""
 		firstElVal = 0.0
@@ -2165,3 +2184,5 @@ func WriteMpsFile(fileName string) error {
 	log(pINFO, "Successfully wrote %d rows and %d cols to file.\n", len(Rows), len(Cols))
 	return nil
 }
+
+//============================ END OF FILE =====================================
