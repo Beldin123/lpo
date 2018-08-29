@@ -113,7 +113,5 @@ Tutorial and Function Exerciser
 
 The executable provided with the package illustrates how the lpo package can be
 used and contains exercisers to allow each lpo and gpx function to be tested independently.
-
-
 */
 package lpo
