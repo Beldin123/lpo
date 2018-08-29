@@ -64,6 +64,16 @@ Models can be created in 4 ways:
 
 Interacting with Cplex
 
+Interaction with Cplex requires that the Cplex software and the gpx package be installed.
+Please refer to the gpx package for installation and configuration instructions.
+
+Users who do not have Cplex, or who do not wish to install gpx, but wish to use other
+functionality provided by lpo must exclude the gpx component from being built. To
+exclude access to gpx functionality, the first line of file ifgpx.go must be changed
+to read as follows:
+
+  // +build exclude
+
 Models can be passed to Cplex for manipulation or solution. There are three ways to do this:
 
   - Once a model is created in lpo, use CplexCreateProb() to transfer it to gpx.
@@ -105,6 +115,16 @@ option of calling individual functions to only perform a specific task. Those
 functions are listed and described in the following sections.
 
 Interacting with Coin-OR
+
+Interaction with Coin-OR requires that the OSSolverService, delivered as one of the Coin-OR
+executables, be installed and configured correctly. Once installed, the ifcoin.go file 
+must be changed so that the following line contains the correct absolute path to the executable:
+
+  var coinOrExe string = "C:/coin_dir/OSSolverService"
+
+Users who do not have Coin-OR installed, or do not wish to use it with lpo need not
+exclude any files from the build. Attempts to use Coin-OR functionality if the executable is 
+missing or the path is not set correctly will result in errors.
 
 Models can be passed to Coin-OR for manipulation or solution. There are two ways to do this:
 
