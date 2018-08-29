@@ -42,19 +42,19 @@ type CoinSoln struct {
 	Dual     []CoinResConDual `xml:"optimization>solution>constraints>dualValues>con"`
 }
 
-// Constraint dual values for the Coin-OR solution.
+// CoinResConDual holds constraint dual values for the Coin-OR solution.
 type CoinResConDual struct {
 	Index  int     `xml:"idx,attr"`
 	Value  float64 `xml:",chardata"`
 }
 
-// Variable values for the Coin-OR solution.
+// CoinResVarb holds variable values for the Coin-OR solution.
 type CoinResVarb struct {
 	Index       int     `xml:"idx,attr"`
 	Value       float64 `xml:",chardata"`
 }
 
-// Variable reduced costs for the Coin-OR solution.
+// CoinResRcost holds variable reduced costs for the Coin-OR solution.
 type CoinResRcost struct {
 	Index       int     `xml:"idx,attr"`
 	Value       float64 `xml:",chardata"`
