@@ -19,6 +19,14 @@ The separate Go language package gpx ("go-Cplex") is used by lpo to interact wit
 the Cplex solver. Package gpx provides Go language wrappers for several of the most useful
 function in the Cplex C language callable library.
 
+Dependencies
+
+Package lpo requires the following:
+
+  - Package github.com/pkg/errors to be installed.
+  - Package github.com/go-opt/gpx to be installed if the Cplex solver is to be used.
+  - OSSolverService executable to be installed if the Coin-OR solver is to be used.
+
 Presolving
 
 Package lpo implements some presolving techniques to reduce the size 
