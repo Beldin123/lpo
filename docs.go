@@ -122,7 +122,7 @@ must be changed so that the following line contains the correct absolute path to
 
   var coinOrExe string = "C:/coin_dir/OSSolverService"
 
-Users who do not have Coin-OR installed, or do not wish to use it with lpo need not
+Users who do not have Coin-OR installed, or do not wish to use it with lpo, need not
 exclude any files from the build. Attempts to use Coin-OR functionality if the executable is 
 missing or the path is not set correctly will result in errors.
 
