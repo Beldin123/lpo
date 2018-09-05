@@ -25,8 +25,11 @@ The gpx package is itself dependent on the installation and configuration of Cpl
 The lporun subdirectory contains the executable of the same name which is intended as a tutorial demonstrating 
 how lpo and gpx functions are used. It must be installed and configured as described in the following section.
 
-The lporun directory contains several text files which contain sample LP and MILP problems, in MPS format, that are used
-by the lporun executable.
+The lporun directory has several text files which contain sample LP and MILP problems, in MPS format, that are used
+by the lporun executable. The sample files are hard-coded in the executable to minimize user input and keep the demo
+program as simple as possible. Users who may be interested in a more comprehensive and complex test tool may look
+https://github.com/go-opt/runopt, which was used during development and testing.
+
 
 # Installation and Configuration
 
