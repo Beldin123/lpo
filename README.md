@@ -58,7 +58,7 @@ If lpo is used with the gpx package, go to the cmd.exe window and install gpx us
 You need to install and configure Cplex, and you also need to configure gpx. Please refer to the instructions
 provided in the gpx package for details.
 
-## Configuring lpo ** **Without** ** gpx
+## Configuring lpo **Without** gpx
 
 If gpx is not installed, you need to modify some lpo files so that the other functions not using gpx may be compiled and
 executed.
