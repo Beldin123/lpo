@@ -52,9 +52,9 @@ an error if called.
 ## Configuring lpo for gpx 
 
 If lpo is used with the gpx package, go to the cmd.exe window and install gpx using the following command:
-
+```
   go get -u github.com/go-opt/gpx
-
+```
 You need to install and configure Cplex, and you also need to configure gpx. Please refer to the instructions
 provided in the gpx package for details.
 
@@ -65,16 +65,16 @@ executed.
 
 File ifgpx.go in the lpo directory and file utilsgpx.go in the lporun directory must be excluded from being built 
 by uncommenting the first line of that file so that it reads:
-
+```
   // +build exclude
-
+```
 In the lporun.go file in the lporun directory, you must comment out the reference to the wpCplexSolveProb function
 so that the block of code reads as follows:
-
+```
   // Comment out the following line if gpx is not installed and
   // the utilsgpx.go file is excluded from being built.
   // err = wpCplexSolveProb()
-
+```
 Once you have made these changes, you can compile and use lpo without gpx.
 
 # Development and Testing
