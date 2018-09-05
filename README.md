@@ -20,14 +20,17 @@ downloaded separately. The import statments are:
 
 The gpx package is itself dependent on the installation and configuration of Cplex. Please refer to that package for details.
 
-# Executable
+# Executable lporun
 
-The lporun subdirectory contains the executable intended as a tutorial demonstrating how lpo and gpx functions are used as well
-as exercisers which permit users to independently call and test each function exported by the two packages.
+The lporun subdirectory contains the executable of the same name which is intended as a tutorial demonstrating 
+how lpo and gpx functions are used. It must be installed and configured as described in the following section.
+
+The lporun directory contains several text files which contain sample LP and MILP problems, in MPS format, that are used
+by the lporun executable.
 
 # Installation and Configuration
 
-To install the package on a Windows platform, go to the cmd.exe window and enter the command:
+To install the package and lporun executable on a Windows platform, go to the cmd.exe window and enter the command:
 ```
   go get -u github.com/go-opt/lpo
 ```
