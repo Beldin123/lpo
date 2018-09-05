@@ -12,7 +12,7 @@ LPO indirectly makes use of the callable C functions available in the Cplex solv
 # Dependencies
 
 The lpo package is dependent on the gpx package and the errors package, both of which are available in github and must be
-downloaded separately. The import statments are:
+downloaded separately. The import statements for the go packages and name of the Coin-OR executable are:
 
 *	github.com/pkg/errors
 *	github.com/go-opt/gpx (if using the callable C functions provided by Cplex)
