@@ -28,8 +28,9 @@ as exercisers which permit users to independently call and test each function ex
 # Installation and Configuration
 
 To install the package on a Windows platform, go to the cmd.exe window and enter the command:
-
+```
   go get -u github.com/go-opt/lpo
+```
 
 The lpo package may be used independently (without any solvers) if you only wish to read and manipulate, but not solve, a model. If you also wish to solve the model, one (or both) of the solvers must also be installed.
 
@@ -41,9 +42,9 @@ see the examples of how this package can be used.
 If lpo is used with Coin-OR, you must install the OSSolverService, which is part of the Coin-OR suite of executables. 
 Once installed, the package global variable in file ifcoin.go must be modified with the correct location of this 
 executable. That is, you must change the following line so that it contains the correct path to the executable:
-
+```
   var coinOrExe string = "C:/coin_dir/OSSolverService"
-
+```
 If you do not wish to use the Coin-OR solver, you need not make any changes in the ifcoin.go or any other file. 
 All functions not associated with Coin-OR will work correctly, and those functions associated with Coin-OR will return 
 an error if called.
