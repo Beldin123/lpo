@@ -2,10 +2,10 @@
 
 Package LPO provides a Go language suite of tools for Linear Programming (LP) and Mixed-Integer Linear Programming (MILP). It is intended for two sets of users: (i) researchers working on LP/MILP algorithms, and (ii) users wanting easy Go access to the well-known Cplex solver. Some of the main functions include:
 
-•	Ability to read model files in MPS format, or to create models directly,
-•	Model presolving,
-•	Evaluating constraints and points,
-•	Solving models via submission to the Cplex solver.
+*	Ability to read model files in MPS format, or to create models directly,
+*	Model presolving,
+*	Evaluating constraints and points,
+*	Solving models via submission to the Cplex solver.
 
 LPO indirectly makes use of the callable C functions available in the Cplex solver by using the independent GPX package.
 
@@ -14,9 +14,9 @@ LPO indirectly makes use of the callable C functions available in the Cplex solv
 The lpo package is dependent on the gpx package and the errors package, both of which are available in github and must be
 downloaded separately. The import statments are:
 
-•	github.com/pkg/errors
-•	github.com/go-opt/gpx (if using the callable C functions provided by Cplex)
-•	OSSolverService (if using the Coin-OR solver)
+*	github.com/pkg/errors
+*	github.com/go-opt/gpx (if using the callable C functions provided by Cplex)
+*	OSSolverService (if using the Coin-OR solver)
 
 The gpx package is itself dependent on the installation and configuration of Cplex. Please refer to that package for details.
 
